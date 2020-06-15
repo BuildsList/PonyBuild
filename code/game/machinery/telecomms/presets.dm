@@ -169,7 +169,7 @@
 	id = "Supply Server"
 	freq_listening = list(SUP_FREQ)
 	autolinkers = list("supply")
-	
+
 /obj/machinery/telecomms/server/presets/service
 	id = "Service Server"
 	freq_listening = list(SRV_FREQ)

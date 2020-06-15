@@ -7,11 +7,23 @@
 
 # not_a_user - Admin
 S_Spy - Host
-Dudeman1011 - Game Master
-Zorghol - Head Admin
-FighterX2500 - Head Admin
 Aphimag - Host
-MyGhosst - Guard Admin
-Luna Solar - Guard Admin
-Sosiskoed - Guard Admin
-IWuna - Guard Admin
+
+Nicknam - Head Admin
+
+GENERALLEGION - Game Admin
+
+Dudeman1011 - Moderator
+Banana Bag - Moderator
+Arkunar - Moderator
+
+Sosiskoed - Mapper
+Zorghol - Spriter
+#GENERALLEGION - Spriter
+MyGhosst - Spriter
+IWuna - Spriter
+Luna Solar - Writer
+Cryptic - Writer
+XxSamMaxxX - Spriter
+ZeSoFFa - Spriter
+Kettenhund - Moderator

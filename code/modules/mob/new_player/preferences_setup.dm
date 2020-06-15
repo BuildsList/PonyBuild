@@ -1,9 +1,52 @@
-datum/preferences
+/datum/preferences/New()
+	..()
+
+
+/datum/preferences
+	proc/CustomCutiemarkPaint(mob/user, mod=1)
+		if(!brush_color)	brush_color = rgb(rand(0, 255), rand(0, 255), rand(0, 255))
+		update_custom_cutiemark(user)
+		world << mod
+		var/list/bordercolor = list("gray", "black")
+		var/dat = {"
+<html><head><script>
+	function paint_mod(mod)
+		{location.href='?_src_=prefs;cutie_paint=draw;mod='+mod;}
+</script></head>
+
+<body><table border=1><tr><td bordercolor=[bordercolor[mod]]>
+<input type="image" src="brush.jpg" onclick='paint_mod("1")'></td><td bordercolor=[bordercolor[3-mod]]>
+<input type="image" src="eraser.jpg" onclick='paint_mod("2")'>
+</td></tr></table>"}
+
+		if(mod==1)
+			dat += "<b>Brush color:<b> <table border=1><tr><td bgcolor='[brush_color]'><font face='fixedsys' size='3' color='[brush_color]'><a href='?_src_=prefs;cutie_paint=1;' style='color: [brush_color]'>__</a></font></td></tr></table>"
+
+		dat += "<br><table border=1 cellspacing=0>"
+		for(var/iy=5, iy>=1, iy--)
+			dat += "<tr>"
+			for(var/ix=1, ix<=5, ix++)
+				dat += {"
+				<td bgcolor='[colors5x5[ix][iy]]'>
+				<a href='?_src_=prefs;cutie_paint=pixel;mod=[mod];x=[ix];y=[iy]' style='color: [colors5x5[ix][iy]]'><font face='fixedsys' size='3' color='[colors5x5[ix][iy]]'>__</font></a>
+				</td>"}
+			dat += "</tr>"
+
+		dat += {"</table>
+<img src=cutiemark_paint.png height=128 width=128>
+<img src=cutiemark_paint2.png height=128 width=128>
+<br>
+<a href='?_src_=prefs;cutie_paint=3'>\[Done\]</a>
+</body>
+</html>
+"}
+		user << browse(dat, "window=cutie_paint;size=300x430;can_resize=0")
+
 	//The mob should have a gender you want before running this proc. Will run fine without H
 	proc/check_color()
 		var/r_dif = abs(r_hair-r_skin)
-		var/g_dif = abs(r_hair-r_skin)
-		var/b_dif = abs(r_hair-r_skin)
+		var/g_dif = abs(g_hair-g_skin)
+		var/b_dif = abs(b_hair-b_skin)
 		if(r_dif+g_dif+b_dif < 60)		//Проверка одинаковости
 			return 0
 
@@ -245,6 +288,8 @@ datum/preferences
 		preview_icon = new /icon(icobase, "torso_[g]")
 		preview_icon.Blend(new /icon(icobase, "groin_[g]"), ICON_OVERLAY)
 		preview_icon.Blend(new /icon(icobase, "head_[g]"), ICON_OVERLAY)
+		preview_icon.Blend(new /icon(icobase, "l_ear"), ICON_OVERLAY)
+		preview_icon.Blend(new /icon(icobase, "r_ear"), ICON_OVERLAY)
 
 		for(var/name in list("r_leg","r_foot","l_leg","l_foot","r_arm","r_hand","l_arm","l_hand"))
 			if(organ_data[name] == "amputated") continue
@@ -257,7 +302,7 @@ datum/preferences
 
 
 		//Magic horn
-		if(current_species && current_species.flags & HAS_HORN)
+		if(current_species && /datum/organ/external/horn in current_species.has_external_organ)
 			var/icon/I = new/icon(current_species.icobase, "horn")
 			preview_icon.Blend(I, ICON_OVERLAY)
 
@@ -267,20 +312,22 @@ datum/preferences
 		if(current_species && (current_species.flags & HAS_SKIN_COLOR))
 			preview_icon.Blend(rgb(r_skin, g_skin, b_skin))
 
-		if(cutie_mark)
-			var/datum/sprite_accessory/cutiemark/CM = cutiemarks_list[cutie_mark]
-			if(CM)
-				var/icon/cutie_mark_s = new/icon(CM.icon, "icon_state" = CM.icon_state)
-				preview_icon.Blend(cutie_mark_s, ICON_OVERLAY)
+		if(cutie_mark && !(cutiemark_paint_east && custom_cutiemark))
+			var/icon/cutie_mark_s = new/icon('icons/mob/cutiemarks.dmi', "icon_state" = cutie_mark)
+			preview_icon.Blend(cutie_mark_s, ICON_OVERLAY)
 
 		//Wings of pegasus
-		if(current_species && (current_species.flags & HAS_WINGS))
-			var/icon/I = new/icon(current_species.icobase, "wings")
+		if(current_species && /datum/organ/external/r_wing in current_species.has_external_organ)
+			var/icon/I = new/icon(current_species.icobase, "r_wing")
+			I.Blend(rgb(r_skin, g_skin, b_skin))
+			preview_icon.Blend(I, ICON_OVERLAY)
+		if(current_species && /datum/organ/external/l_wing in current_species.has_external_organ)
+			var/icon/I = new/icon(current_species.icobase, "l_wing")
 			I.Blend(rgb(r_skin, g_skin, b_skin))
 			preview_icon.Blend(I, ICON_OVERLAY)
 
 		//Magic aura
-		if(current_species && current_species.flags & HAS_HORN)
+		if(current_species && current_species && /datum/organ/external/horn in current_species.has_external_organ)
 			var/icon/I = new/icon('icons/mob/pony.dmi', "icon_state" = "horn_light")
 			I.Blend(rgb(r_aura, g_aura, b_aura), ICON_ADD)
 			preview_icon.Blend(I, ICON_OVERLAY)
@@ -295,8 +342,7 @@ datum/preferences
 
 		var/datum/sprite_accessory/hair_style = hair_styles_list[h_style]
 		if(hair_style)
-			var/un
-			if(current_species.flags & HAS_HORN)	un = "_un"
+			var/un = (/datum/organ/external/horn in current_species.has_external_organ) ? "_un" : ""
 			var/icon/hair_s = new/icon("icon" = hair_style.icon, "icon_state" = "[hair_style.icon_state][un]_s")
 			hair_s.Blend(rgb(r_hair, g_hair, b_hair), ICON_ADD)
 			eyes_s.Blend(hair_s, ICON_OVERLAY)
@@ -331,6 +377,7 @@ datum/preferences
 					//clothes_s.Blend(new /icon('icons/mob/feet.dmi', "brown"), ICON_UNDERLAY)
 					if(prob(1))
 						clothes_s.Blend(new /icon('icons/mob/suit.dmi', "ianshirt"), ICON_OVERLAY)
+
 					switch(backbag)
 						if(2)
 							clothes_s.Blend(new /icon('icons/mob/back.dmi', "backpack"), ICON_OVERLAY)
@@ -377,6 +424,7 @@ datum/preferences
 						if(2)	clothes_s.Blend(new /icon('icons/mob/back.dmi', "backpack"), ICON_OVERLAY)
 						if(3)	clothes_s.Blend(new /icon('icons/mob/back.dmi', "satchel-norm"), ICON_OVERLAY)
 						if(4)	clothes_s.Blend(new /icon('icons/mob/back.dmi', "satchel"), ICON_OVERLAY)
+
 				if(LIBRARIAN)
 					clothes_s = new /icon('icons/mob/uniform.dmi', mf_under("red_suit_s"))
 					//clothes_s.Blend(new /icon('icons/mob/feet.dmi', "black"), ICON_UNDERLAY)
@@ -672,6 +720,12 @@ datum/preferences
 		preview_icon_front = new(preview_icon, dir = SOUTH)
 		preview_icon_side = new(preview_icon, dir = WEST)
 
+		if(cutiemark_paint_west && custom_cutiemark)
+			preview_icon_side.Blend(cutiemark_paint_west, ICON_OVERLAY)
+
 		del(eyes_s)
 		del(pony_tail_s)
 		del(clothes_s)
+
+
+

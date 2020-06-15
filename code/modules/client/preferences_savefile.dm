@@ -58,6 +58,7 @@
 	S["toggles"]			>> toggles
 	S["UI_style_color"]		>> UI_style_color
 	S["UI_style_alpha"]		>> UI_style_alpha
+	S["language"]			>> usr.client.language
 
 	//Sanitize
 	ooccolor		= sanitize_hexcolor(ooccolor, initial(ooccolor))
@@ -86,6 +87,7 @@
 	S["be_special"]			<< be_special
 	S["default_slot"]		<< default_slot
 	S["toggles"]			<< toggles
+	S["language"]			<< usr.client.language
 
 	return 1
 
@@ -124,9 +126,9 @@
 	S["facial_red"]			>> r_facial
 	S["facial_green"]		>> g_facial
 	S["facial_blue"]		>> b_facial
-	S["pony_tail_red"]			>> r_tail
-	S["pony_tail_green"]		>> g_tail
-	S["pony_tail_blue"]			>> b_tail
+	S["pony_tail_red"]		>> r_tail
+	S["pony_tail_green"]	>> g_tail
+	S["pony_tail_blue"]		>> b_tail
 	S["skin_tone"]			>> s_tone
 	S["skin_red"]			>> r_skin
 	S["skin_green"]			>> g_skin
@@ -136,7 +138,7 @@
 	S["eyes_red"]			>> r_eyes
 	S["eyes_green"]			>> g_eyes
 	S["eyes_blue"]			>> b_eyes
-	S["pony_tail_style"]		>> pony_tail_style
+	S["pony_tail_style"]	>> pony_tail_style
 	S["cutie_mark"]			>> cutie_mark
 	S["backbag"]			>> backbag
 	S["b_type"]				>> b_type
@@ -183,7 +185,7 @@
 	S["skill_specialization"] >> skill_specialization
 	S["organ_data"]			>> organ_data
 	S["gear"]				>> gear
-	S["unicorn_spells"]		>> unicorn_spells
+	S["unicorn_spells"]		>> spell_paths
 	S["home_system"] 		>> home_system
 	S["citizenship"] 		>> citizenship
 	S["faction"] 			>> faction
@@ -195,8 +197,13 @@
 	S["uplinklocation"] >> uplinklocation
 	S["exploit_record"]	>> exploit_record
 
-	S["UI_style_color"]		<< UI_style_color
-	S["UI_style_alpha"]		<< UI_style_alpha
+	S["UI_style_color"]		>> UI_style_color
+	S["UI_style_alpha"]		>> UI_style_alpha
+
+
+	for(var/ix=1, ix<=4, ix++)	for(var/iy=1, iy<=4, iy++)
+		S["cutie_paint_[ix]-[iy]"]	>> colors5x5[ix][iy]
+	update_custom_cutiemark()
 
 	//Sanitize
 	metadata		= sanitize_text(metadata, initial(metadata))
@@ -205,7 +212,7 @@
 	if(isnull(species) || !(species in playable_species))
 		species = "Earthpony"
 
-	if(isnull(cutie_mark))
+	if(isnull(cutie_mark) || cutie_mark=="")
 		cutie_mark = "Blank"
 
 	if(isnull(language)) language = "None"
@@ -294,10 +301,10 @@
 	S["eyes_red"]			<< r_eyes
 	S["eyes_green"]			<< g_eyes
 	S["eyes_blue"]			<< b_eyes
-	S["pony_tail_red"]			<< r_tail
-	S["pony_tail_green"]		<< g_tail
-	S["pony_tail_blue"]			<< b_tail
-	S["pony_tail_style"]		<< pony_tail_style
+	S["pony_tail_red"]		<< r_tail
+	S["pony_tail_green"]	<< g_tail
+	S["pony_tail_blue"]		<< b_tail
+	S["pony_tail_style"]	<< pony_tail_style
 	S["cutie_mark"]			<< cutie_mark
 	S["backbag"]			<< backbag
 	S["b_type"]				<< b_type
@@ -337,7 +344,7 @@
 	S["med_record"]			<< med_record
 	S["sec_record"]			<< sec_record
 	S["gen_record"]			<< gen_record
-	S["player_alt_titles"]		<< player_alt_titles
+	S["player_alt_titles"]	<< player_alt_titles
 	S["be_special"]			<< be_special
 	S["disabilities"]		<< disabilities
 	S["used_skillpoints"]	<< used_skillpoints
@@ -345,7 +352,7 @@
 	S["skill_specialization"] << skill_specialization
 	S["organ_data"]			<< organ_data
 	S["gear"]				<< gear
-	S["unicorn_spells"]		<< unicorn_spells
+	S["unicorn_spells"]		<< spell_paths
 	S["home_system"] 		<< home_system
 	S["citizenship"] 		<< citizenship
 	S["faction"] 			<< faction
@@ -359,6 +366,9 @@
 
 	S["UI_style_color"]		<< UI_style_color
 	S["UI_style_alpha"]		<< UI_style_alpha
+
+	for(var/ix=1, ix<=4, ix++)	for(var/iy=1, iy<=4, iy++)
+		S["cutie_paint_[ix]-[iy]"]	<< colors5x5[ix][iy]
 
 	return 1
 

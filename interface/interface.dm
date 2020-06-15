@@ -24,24 +24,57 @@
 
 var/list/bagreports = list()
 
-/client/verb/fast_bag_report()//Не забыть про чейнжлог
-	set name = "fast_bag_report"
+/client/verb/changes()
+	set name = "Changelog"
+	set category = "OOC"
+	set hidden = 1
+	getFiles(
+		'html/postcardsmall.jpg',
+		'html/somerights20.png',
+		'html/88x31.png',
+		'html/bug-minus.png',
+		'html/cross-circle.png',
+		'html/hard-hat-exclamation.png',
+		'html/image-minus.png',
+		'html/image-plus.png',
+		'html/music-minus.png',
+		'html/music-plus.png',
+		'html/tick-circle.png',
+		'html/wrench-screwdriver.png',
+		'html/spell-check.png',
+		'html/burn-exclamation.png',
+		'html/chevron.png',
+		'html/chevron-expand.png',
+		'html/changelog.css',
+		'html/changelog.js',
+		'html/changelog.html'
+		)
+	src << browse('html/changelog.html', "window=changes;size=675x650")
+	if(prefs.lastchangelog != changelog_hash)
+		prefs.lastchangelog = changelog_hash
+		prefs.save_preferences()
+		winset(src, "rpane.changelog", "background-color=none;font-style=;")
+
+/client/verb/fast_bug_report()//Не забыть про чейнжлог
+	set name = "fast_bug_report"
 	set desc = "You can read and write here about actual errors."
 	set hidden = 1
 	var/dat = "<html><body>"
 	for(var/message in bagreports)
 		if(message)
 			dat += message
-			//dat += "<a href=?bagreport_remove> Remove</a>"
+			if(check_rights(R_ADMIN, 0) || findtext(message, key))
+				dat += " - <a href='?src=\ref[src];bugreport=remove;msg=[bagreports.Find(message)]'> Remove</a>"
 			dat += "<br><br>"
-	dat += "<a href=?bagreport_add><b>\[Add Report\]</a></b><br>"
+	dat += "<a href='?src=\ref[src];bugreport=add'><b>\[Add Report\]</a></b><br>"
 	dat += "</body></html>"
-	usr << browse(dat, "window=bagreport;size=300x400")
+	usr << browse(dat, "window=bugreport;size=300x400")
 
 /world/New()
 	..()
 	var/file = file2text("data/bagreport.txt")
 	bagreports = splittext(file, "\n")
+
 
 /world/Del()
 	fdel("data/bagreport.txt")
@@ -50,14 +83,101 @@ var/list/bagreports = list()
 	..()
 
 
-/client/Topic(href)
-	if(href == "bagreport_add")
-		var/message = input("Введите описание ошибки.","Сообщение")
-		if(message)
-			bagreports += "<b>[usr.key]:</b> [message]"
-		fast_bag_report()
 
-	else ..()
+/client/var/language = "eng"
+/client/proc/show_motd(var/source = "welcome_eng")
+	var/label_lang 		= (language == "ru") ? "Язык" 			: "Language"
+	var/label_home 		= (language == "ru") ? "Главная" 		: "Home"
+	var/label_changelog = (language == "ru") ? "Обновления" 	: "Changelog"
+	var/label_rules 	= (language == "ru") ? "Правила" 		: "Rules"
+	var/label_stories 	= (language == "ru") ? "Истории" 		: "History"
+	var/label_wiki 		= (language == "ru") ? "Вики" 			: "Wiki"
+	var/label_admin 	= (language == "ru") ? "Администрация" : "Administration"
+	var/label_credits 	= (language == "ru") ? "Благодарности" : "Credits"
+	var/label_donut 	= (language == "ru") ? "Донат" : "Donut"
+
+
+	var/dat = {"
+<html>
+<head>
+<title>[source]</title>
+<meta charset="windows-1251">
+<script>
+	function page_home() 		{location.href='?_src_=welcome;motd=welcome_[language]';}
+	function page_changelog() 	{location.href='?_src_=welcome;motd=changelog_[language]';}
+	function page_rules() 		{location.href='?_src_=welcome;motd=rules_[language]';}
+	function page_credits() 	{location.href='?_src_=welcome;motd=credits_[language]';}
+	function page_stories()		{location.href='?_src_=welcome;motd=stories';}
+	function page_wiki() 		{location.href='?_src_=welcome;motd=wiki';}
+	function page_admin() 		{location.href='?_src_=welcome;motd=admins;';}
+	function page_donut() 		{location.href='?_src_=welcome;motd=donut;';}
+
+</script>
+ </head>
+
+
+<body>
+<table><tr>
+<td width = 80><input type="button" value="[label_home]" id="button1_home" onclick="page_home()">				</td>
+<td width = 40>																									</td>
+<td><input type="button" value="[label_changelog]" 		id="button2_changelog" onclick="page_changelog()">		</td>
+<td><input type="button" value="[label_rules]" 			id="button3_rules" onclick="page_rules()">				</td>
+<td><input type="button" value="[label_stories]" 		id="button4_stories" onclick="page_stories()">			</td>
+<td><input type="button" value="[label_wiki]" 			id="button5_wiki" onclick="page_wiki()">				</td>
+<td><input type="button" value="[label_admin]" 			id="button6_admin" onclick="page_admin()">				</td>
+<td><input type="button" value="[label_donut]" 			id="button6_admin" onclick="page_donut()">				</td>
+<td align="right"><input type="button" value="[label_credits]" id="button7_credits" onclick="page_credits()">	</td>
+</tr><tr>
+<td>[label_lang]: 															</td>
+<td><a href='?_src_=welcome;motd=switch_lang;old=[source]'>[language]</a> 	</td>
+</tr><table>
+
+<br>
+
+[file2text("config/info/[source].html")]
+
+</body></html>
+	"}
+	usr << browse(fix_html(dat), "window=welcome;size=950x450")
+
+
+/client/Topic(href, href_list[])
+	if(href_list["motd"])
+		if(href_list["motd"]=="switch_lang")
+			language = (language == "ru") ? "eng" : "ru"
+			switch(href_list["old"])
+				if("welcome_eng")	show_motd("welcome_ru")
+				if("welcome_ru")	show_motd("welcome_eng")
+				if("changelog_eng")	show_motd("changelog_ru")
+				if("changelog_ru")	show_motd("changelog_eng")
+				if("rules_eng")		show_motd("rules_ru")
+				if("rules_ru")		show_motd("rules_eng")
+				if("credits_eng")	show_motd("credits_ru")
+				if("credits_ru")	show_motd("credits_eng")
+				else	show_motd(href_list["old"])
+		else
+			show_motd(href_list["motd"])
+
+	..()
+
+
+/client/verb/welcome()
+	set hidden = 1
+	show_motd("welcome_[language]")
+
+
+/client/Topic(href, href_list[])
+	switch(href_list["bugreport"])
+		if("add")
+			var/message = input("Введите описание ошибки.","Сообщение")
+			if(message)
+				bagreports += "<b>[usr.key]:</b> [fix_html(message)]"
+			fast_bug_report()
+		if("remove")
+			if(alert("You're sure?", null, "Yes", "No")=="Yes")
+				bagreports -= bagreports[text2num(href_list["msg"])]
+				fast_bug_report()
+		else ..()
 
 /client/verb/forum()
 	set name = "forum"

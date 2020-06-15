@@ -21,18 +21,8 @@
  * Text sanitization
  */
 
-/mob/verb/test_text()
-	var/t = "\"__ßÿßÿß___ßßßÿÿÿßßß__\""
-
-	usr << "1._"+fix_255(t)
-	usr << "2._"+strip_html_simple(t)
-	usr << "3._"+sanitize_simple(t)
-	usr << "4._"+readd_quotes(t)
-	usr << "5._"+sanitize(t)
-	usr << "6._"+strip_html(t)
-	usr << "7._"+reject_bad_text(t)
-
-
+proc/fix_html(var/t)
+	return replacetext(t, "ÿ", "&#1103;")
 
 //Simply removes < and > and limits the length of the message
 /proc/strip_html_simple(var/t,var/limit=MAX_MESSAGE_LEN)

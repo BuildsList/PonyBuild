@@ -1,7 +1,16 @@
+/mob/Login()
+	..()
+	if(ispony(usr)) usr:add_unicorn_verbs()
+	world << {"<p style="color:#0000cc"><b>[client.key] entered the game.</b></p>"}
+
+
+
 /mob/new_player/Login()
 	update_Login_details()	//handles setting lastKnownIP and computer_id for use by the ban systems as well as checking for multikeying
-	if(join_motd)
-		src << join_motd//"<div class=\"motd\">[join_motd]</div>"
+
+
+	spawn(20)
+		client.show_motd("welcome_[client.language]")
 
 	if(!mind)
 		mind = new /datum/mind(key)
@@ -27,7 +36,9 @@
 		loc = pick(watch_locations)
 */
 	new_player_panel()
+
 	spawn(40)
 		if(client)
 			handle_privacy_poll()
 			client.playtitlemusic()
+	//AddRep(ckey)

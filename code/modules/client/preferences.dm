@@ -90,7 +90,6 @@ datum/preferences
 	var/species_preview                 //Used for the species selection window.
 	var/language = "None"				//Secondary language
 	var/list/gear						//Custom/fluff item loadout.
-	var/list/unicorn_spells
 	var/total_SP = 0
 	var/free_SP = 0
 		//Some faction information.
@@ -146,7 +145,18 @@ datum/preferences
 	var/metadata = ""
 	var/slot_name = ""
 
+	var/brush_color
+	var/colors5x5[5][5]//Для записи в лист сохранений
+	var/custom_cutiemark = 0
+	var/icon/cutiemark_paint_west
+	var/icon/cutiemark_paint_east
+	var/list/spell_paths = list()
+
 /datum/preferences/New(client/C)
+	for(var/i1=1, i1<=5, i1++)	for(var/i2=1, i2<=5, i2++)
+		colors5x5[i1][i2]="#00000000"
+
+
 	b_type = pick(4;"O-", 36;"O+", 3;"A-", 28;"A+", 1;"B-", 20;"B+", 1;"AB-", 5;"AB+")
 	if(istype(C) && !IsGuestKey(C.key))
 		load_path(C.ckey)
@@ -157,6 +167,7 @@ datum/preferences
 	real_name = random_name(gender,species)
 
 	gear = list()
+	update_custom_cutiemark()
 
 /datum/preferences/proc/ZeroSkills(var/forced = 0)
 	for(var/V in SKILLS) for(var/datum/skill/S in SKILLS[V])
@@ -259,42 +270,42 @@ datum/preferences
 
 	if(path)
 		dat += "<center>"
-		dat += "Slot <b>[slot_name]</b> - "
-		dat += "<a href=\"byond://?src=\ref[user];preference=open_load_dialog\">Load slot</a> - "
-		dat += "<a href=\"byond://?src=\ref[user];preference=save\">Save slot</a> - "
-		dat += "<a href=\"byond://?src=\ref[user];preference=reload\">Reload slot</a>"
+		dat += "[local("Slot")] <b>[slot_name]</b> - "
+		dat += "<a href=\"byond://?src=\ref[user];preference=open_load_dialog\">[local("Load slot")]</a> - "
+		dat += "<a href=\"byond://?src=\ref[user];preference=save\">[local("Save slot")]</a> - "
+		dat += "<a href=\"byond://?src=\ref[user];preference=reload\">[local("Reload slot")]</a>"
 		dat += "</center>"
 
 	else
-		dat += "Please create an account to save your preferences."
+		dat += local("Please create an account to save your preferences.")
 
 	dat += "</center><hr><table><tr><td width='340px' height='320px'>"
 
-	dat += "<b>Name:</b> "
+	dat += "<b>[local("Name")]:</b> "
 	dat += "<a href='?_src_=prefs;preference=name;task=input'><b>[real_name]</b></a><br>"
-	dat += "(<a href='?_src_=prefs;preference=name;task=random'>Random Name</A>) "
-	dat += "(<a href='?_src_=prefs;preference=name'>Always Random Name: [be_random_name ? "Yes" : "No"]</a>)"
+	dat += "(<a href='?_src_=prefs;preference=name;task=random'>[local("Random name")]</A>) "
+	dat += "(<a href='?_src_=prefs;preference=name'>[local("Always random name")]: [be_random_name ? local("Yes") : local("No")]</a>)"
 	dat += "<br>"
 
-	dat += "<b>Gender:</b> <a href='?_src_=prefs;preference=gender'><b>[gender == MALE ? "Male" : "Female"]</b></a><br>"
-	dat += "<b>Age:</b> <a href='?_src_=prefs;preference=age;task=input'>[age]</a><br>"
-	dat += "<b>Spawn Point</b>: <a href='byond://?src=\ref[user];preference=spawnpoint;task=input'>[spawnpoint]</a>"
+	dat += "<b>[local("Gender")]:</b> <a href='?_src_=prefs;preference=gender'><b>[gender == MALE ? local("Male") : local("Female")]</b></a><br>"
+	dat += "<b>[local("Age")]:</b> <a href='?_src_=prefs;preference=age;task=input'>[age]</a><br>"
+	dat += "<b>[local("Spawn Point")]</b>: <a href='byond://?src=\ref[user];preference=spawnpoint;task=input'>[spawnpoint]</a>"
 
 	dat += "<br>"
-	dat += "<b>UI Style:</b> <a href='?_src_=prefs;preference=ui'><b>[UI_style]</b></a><br>"
-	dat += "<b>Custom UI</b>(recommended for White UI):<br>"
-	dat += "-Color: <b><table style='display:inline;' bgcolor='[UI_style_color]'><tr><td><a href='?_src_=prefs;preference=UIcolor'>__</a></td></tr></table></b> <br>"
-	dat += "-Alpha(transparency): <a href='?_src_=prefs;preference=UIalpha'><b>[UI_style_alpha]</b></a><br>"
-	dat += "<b>Play admin midis:</b> <a href='?_src_=prefs;preference=hear_midis'><b>[(toggles & SOUND_MIDI) ? "Yes" : "No"]</b></a><br>"
-	dat += "<b>Play lobby music:</b> <a href='?_src_=prefs;preference=lobby_music'><b>[(toggles & SOUND_LOBBY) ? "Yes" : "No"]</b></a><br>"
-	dat += "<b>Ghost ears:</b> <a href='?_src_=prefs;preference=ghost_ears'><b>[(toggles & CHAT_GHOSTEARS) ? "All Speech" : "Nearest Creatures"]</b></a><br>"
-	dat += "<b>Ghost sight:</b> <a href='?_src_=prefs;preference=ghost_sight'><b>[(toggles & CHAT_GHOSTSIGHT) ? "All Emotes" : "Nearest Creatures"]</b></a><br>"
-	dat += "<b>Ghost radio:</b> <a href='?_src_=prefs;preference=ghost_radio'><b>[(toggles & CHAT_GHOSTRADIO) ? "All Chatter" : "Nearest Speakers"]</b></a><br>"
+	dat += "<b>[local("UI Style")]:</b> <a href='?_src_=prefs;preference=ui'><b>[UI_style]</b></a><br>"
+	dat += "<b>[local("Custom UI")]</b>(recommended for White UI):<br>"
+	dat += "-[local("Color")]: <b><table style='display:inline;' bgcolor='[UI_style_color]'><tr><td><a href='?_src_=prefs;preference=UIcolor'>__</a></td></tr></table></b> <br>"
+	dat += "-[local("Transparency")]: <a href='?_src_=prefs;preference=UIalpha'><b>[UI_style_alpha]</b></a><br>"
+	dat += "<b>[local("Play admin midis")]:</b> <a href='?_src_=prefs;preference=hear_midis'><b>[(toggles & SOUND_MIDI) ? local("Yes") : local("No")]</b></a><br>"
+	dat += "<b>[local("Hear lobby music")]:</b> <a href='?_src_=prefs;preference=lobby_music'><b>[(toggles & SOUND_LOBBY) ? local("Yes") : local("No")]</b></a><br>"
+	dat += "<b>[local("Ghost ears")]:</b> <a href='?_src_=prefs;preference=ghost_ears'><b>[(toggles & CHAT_GHOSTEARS) ? local("All Speech") : local("Nearest Creatures")]</b></a><br>"
+	dat += "<b>[local("Ghost sight")]:</b> <a href='?_src_=prefs;preference=ghost_sight'><b>[(toggles & CHAT_GHOSTSIGHT) ? local("All Emotes") : local("Nearest Creatures")]</b></a><br>"
+	dat += "<b>[local("Ghost radio")]:</b> <a href='?_src_=prefs;preference=ghost_radio'><b>[(toggles & CHAT_GHOSTRADIO) ? local("All Speech") : local("Nearest Speakers")]</b></a><br>"
 
 	if(config.allow_Metadata)
-		dat += "<b>OOC Notes:</b> <a href='?_src_=prefs;preference=metadata;task=input'> Edit </a><br>"
+		dat += "<b>OOC [local("Notes")]:</b> <a href='?_src_=prefs;preference=metadata;task=input'> [local("Edit")] </a><br>"
 
-	dat += "<br><b>Custom Loadout:</b> "
+	dat += "<br><b>[local("Custom Loadout")]:</b> "
 	var/total_cost = 0
 
 	if(!islist(gear)) gear = list()
@@ -305,33 +316,31 @@ datum/preferences
 			var/datum/gear/G = gear_datums[gear[i]]
 			if(G)
 				total_cost += G.cost
-				dat += "[gear[i]] ([G.cost] points) <a href='byond://?src=\ref[user];preference=loadout;task=remove;gear=[i]'>\[remove\]</a><br>"
+				dat += "[gear[i]] ([G.cost] [local("points")]) <a href='byond://?src=\ref[user];preference=loadout;task=remove;gear=[i]'>\[[local("remove")]\]</a><br>"
 
-		dat += "<b>Used:</b> [total_cost] points."
-	else
-		dat += "none."
+		dat += "<b>[local("Used")]:</b> [total_cost] [local("points")]."
 
 	if(total_cost < MAX_GEAR_COST)
-		dat += " <a href='byond://?src=\ref[user];preference=loadout;task=input'>\[add\]</a>"
+		dat += " <a href='byond://?src=\ref[user];preference=loadout;task=input'>\[[local("add")]\]</a>"
 		if(gear && gear.len)
-			dat += " <a href='byond://?src=\ref[user];preference=loadout;task=clear'>\[clear\]</a>"
+			dat += " <a href='byond://?src=\ref[user];preference=loadout;task=clear'>\[[local("clear")]\]</a>"
 
-	dat += "<br><br><b>Occupation Choices</b><br>"
-	dat += "\t<a href='?_src_=prefs;preference=job;task=menu'><b>Set Preferences</b></a><br>"
+	dat += "<br><br><b>[local("Occupation Choices")]</b><br>"
+	dat += "\t<a href='?_src_=prefs;preference=job;task=menu'><b>[local("Set Preferences")]</b></a><br>"
 
-	dat += "<br><table><tr><td><b>Body</b> "
+	dat += "<br><table><tr><td><b>[local("Body")]</b> "
 	dat += "(<a href='?_src_=prefs;preference=all;task=random'>&reg;</A>)"
 	dat += "<br>"
-	dat += "Species: <a href='?src=\ref[user];preference=species;task=change'>[species]</a><br>"
+	dat += "[local("Species")]: <a href='?src=\ref[user];preference=species;task=change'>[species]</a><br>"
 	if(species == "Unicorn")
-		dat += "<b><a href=\"byond://?src=\ref[user];preference=spelloptions;active=0\">Set Unicorn Spells</b></a><br>"
-	dat += "Secondary Language:<br><a href='byond://?src=\ref[user];preference=language;task=input'>[language]</a><br>"
-	dat += "Blood Type: <a href='byond://?src=\ref[user];preference=b_type;task=input'>[b_type]</a><br>"
+		dat += "<b><a href=\"byond://?src=\ref[user];preference=spelloptions;active=0\">[local("Set Spells")]</b></a><br>"
+	dat += "[local("Secondary Language")]: <a href='byond://?src=\ref[user];preference=language;task=input'>[language]</a><br>"
+	dat += "[local("Blood Type")]: <a href='byond://?src=\ref[user];preference=b_type;task=input'>[b_type]</a><br>"
 	//dat += "Skin Tone: <a href='?_src_=prefs;preference=s_tone;task=input'>[-s_tone + 35]/220<br></a>"//Пони не нужно
 	//dat += "Skin pattern: <a href='byond://?src=\ref[user];preference=skin_style;task=input'>Adjust</a><br>"
-	dat += "Needs Glasses: <a href='?_src_=prefs;preference=disabilities'><b>[disabilities == 0 ? "No" : "Yes"]</b></a><br>"
-	dat += "Limbs: <a href='byond://?src=\ref[user];preference=limbs;task=input'>Adjust</a><br>"
-	dat += "Internal Organs: <a href='byond://?src=\ref[user];preference=organs;task=input'>Adjust</a><br>"
+	dat += "[local("Glasses")]: <a href='?_src_=prefs;preference=disabilities'><b>[disabilities == 0 ? local("Not necessary") : local("Necessary")]</b></a><br>"
+	dat += "[local("Limbs")]: <a href='byond://?src=\ref[user];preference=limbs;task=input'>[local("Adjust")]</a><br>"
+	dat += "[local("Internal Organs")]: <a href='byond://?src=\ref[user];preference=organs;task=input'>[local("Adjust")]</a><br>"
 
 	//display limbs below
 	var/ind = 0
@@ -341,115 +350,125 @@ datum/preferences
 		var/organ_name = null
 		switch(name)
 			if("l_arm")
-				organ_name = "left arm"
+				organ_name = "left foreleg"
 			if("r_arm")
-				organ_name = "right arm"
+				organ_name = "right foreleg"
 			if("l_leg")
-				organ_name = "left leg"
+				organ_name = "left back leg"
 			if("r_leg")
-				organ_name = "right leg"
+				organ_name = "right back leg"
 			if("l_foot")
-				organ_name = "left foot"
+				organ_name = "left back hoof"
 			if("r_foot")
-				organ_name = "right foot"
+				organ_name = "right back hoof"
 			if("l_hand")
-				organ_name = "left hand"
+				organ_name = "left forehoof"
 			if("r_hand")
-				organ_name = "right hand"
+				organ_name = "right forehoof"
 			if("heart")
 				organ_name = "heart"
 			if("eyes")
 				organ_name = "eyes"
 
+
 		if(status == "cyborg")
 			++ind
 			if(ind > 1)
 				dat += ", "
-			dat += "\tMechanical [organ_name] prothesis"
+			dat += "\t[local("Mechanical [organ_name] prothesis")]"
 		else if(status == "amputated")
 			++ind
 			if(ind > 1)
 				dat += ", "
-			dat += "\tAmputated [organ_name]"
+			dat += "\t[local("Amputated [organ_name]")]"
 		else if(status == "mechanical")
 			++ind
 			if(ind > 1)
 				dat += ", "
-			dat += "\tMechanical [organ_name]"
+			dat += "\t[local("Mechanical [organ_name]")]"
 		else if(status == "assisted")
 			++ind
 			if(ind > 1)
 				dat += ", "
 			switch(organ_name)
 				if("heart")
-					dat += "\tPacemaker-assisted [organ_name]"
+					dat += "\t[local("Pacemaker-assisted [organ_name]")]"
 				if("voicebox") //on adding voiceboxes for speaking alicorn/similar replacements
-					dat += "\tSurgically altered [organ_name]"
+					dat += "\t[local("Surgically altered [organ_name]")]"
 				if("eyes")
-					dat += "\tRetinal overlayed [organ_name]"
+					dat += "\t[local("Retinal overlayed [organ_name]")]"
 				else
-					dat += "\tMechanically assisted [organ_name]"
+					dat += "\t[local("Mechanically assisted [organ_name]")]"
 	if(!ind)
 		dat += "\[...\]<br><br>"
 	else
 		dat += "<br><br>"
 
-	dat += "Cutie Mark:<br><a href='?_src_=prefs;preference=cutie_mark;task=input'><b>[cutie_mark]</b></a><br>"
 
-	dat += "Backpack Type:<br><a href ='?_src_=prefs;preference=bag;task=input'><b>[backbaglist[backbag]]</b></a><br>"
+	dat += "[local("CutieMark")]:<br>"
+	if(custom_cutiemark)
+		dat += "<a href='?_src_=prefs;cutie_paint=draw;mod=1'><b>[local("Draw Custom")]</b>"
+	else
+		dat += "<a href='?_src_=prefs;preference=cutie_mark;task=input'>[cutie_mark]"
+	dat += "</a><br>(Custom: <a href='?_src_=prefs;cutie_paint=switch'>"
+	dat += (custom_cutiemark) ? local("Yes") : local("No")
+	dat += "</a>)<br><br>"
 
-	dat += "Nanotrasen Relation:<br><a href ='?_src_=prefs;preference=nt_relation;task=input'><b>[nanotrasen_relation]</b></a><br>"
 
-	dat += "<br><br><b>Background Information</b><br>"
-	dat += "<b>Home system</b>: <a href='byond://?src=\ref[user];preference=home_system;task=input'>[home_system]</a><br/>"
-	dat += "<b>Citizenship</b>: <a href='byond://?src=\ref[user];preference=citizenship;task=input'>[citizenship]</a><br/>"
-	dat += "<b>Faction</b>: <a href='byond://?src=\ref[user];preference=faction;task=input'>[faction]</a><br/>"
-	dat += "<b>Religion</b>: <a href='byond://?src=\ref[user];preference=religion;task=input'>[religion]</a><br/>"
+	dat += "[local("Backpack Type")]:<br><a href ='?_src_=prefs;preference=bag;task=input'><b>[backbaglist[backbag]]</b></a><br>"
 
-	dat += "</td><td><b>Preview</b><br><img src=previewicon.png height=64 width=64><img src=previewicon2.png height=64 width=64></td></tr></table>"
+	dat += "[local("Nanotrasen Relation")]:<br><a href ='?_src_=prefs;preference=nt_relation;task=input'><b>[nanotrasen_relation]</b></a><br>"
+
+	dat += "<br><br><b>[local("Background Information")]</b><br>"
+	dat += "<b>[local("Home system")]</b>: <a href='byond://?src=\ref[user];preference=home_system;task=input'>[home_system]</a><br/>"
+	dat += "<b>[local("Citizenship")]</b>: <a href='byond://?src=\ref[user];preference=citizenship;task=input'>[citizenship]</a><br/>"
+	dat += "<b>[local("Faction")]</b>: <a href='byond://?src=\ref[user];preference=faction;task=input'>[faction]</a><br/>"
+	dat += "<b>[local("Religion")]</b>: <a href='byond://?src=\ref[user];preference=religion;task=input'>[religion]</a><br/>"
+
+	dat += "</td><td><b>[local("Preview")]</b><br><img src=previewicon.png height=64 width=64><img src=previewicon2.png height=64 width=64></td></tr></table>"
 
 	dat += "</td><td width='300px' height='300px'>"
 
 	if(jobban_isbanned(user, "Records"))
-		dat += "<b>You are banned from using character records.</b><br>"
+		dat += "<b>[local("You are banned from using character records")].</b><br>"
 	else
-		dat += "<b><a href=\"byond://?src=\ref[user];preference=records;record=1\">Character Records</a></b><br>"
+		dat += "<b><a href=\"byond://?src=\ref[user];preference=records;record=1\">[local("Character Records")]</a></b><br>"
 
-	dat += "<b><a href=\"byond://?src=\ref[user];preference=antagoptions;active=0\">Set Antag Options</b></a><br>"
+	dat += "<b><a href=\"byond://?src=\ref[user];preference=antagoptions;active=0\">[local("Set Antag Options")]</b></a><br>"
 
-	dat += "\t<a href=\"byond://?src=\ref[user];preference=skills\"><b>Set Skills</b> (<i>[GetSkillClass(used_skillpoints)] [used_skillpoints > 0 ? "[used_skillpoints]" : "0"]</i>)</a><br>"
+	dat += "\t<a href=\"byond://?src=\ref[user];preference=skills\"><b>[local("Set Skills")]</b> (<i>[GetSkillClass(used_skillpoints)] [used_skillpoints > 0 ? "[used_skillpoints]" : "0"]</i>)</a><br>"
 
-	dat += "<a href='byond://?src=\ref[user];preference=flavor_text;task=open'><b>Set Flavor Text</b></a><br>"
-	dat += "<a href='byond://?src=\ref[user];preference=flavour_text_robot;task=open'><b>Set Robot Flavour Text</b></a><br>"
+	dat += "<a href='byond://?src=\ref[user];preference=flavor_text;task=open'><b>[local("Set Flavor Text")]</b></a><br>"
+	dat += "<a href='byond://?src=\ref[user];preference=flavour_text_robot;task=open'><b>[local("Set Robot Flavour Text")]</b></a><br>"
 
-	dat += "<a href='byond://?src=\ref[user];preference=pAI'><b>pAI Configuration</b></a><br>"
+	dat += "<a href='byond://?src=\ref[user];preference=pAI'><b>[local("pAI Configuration")]</b></a><br>"
 	dat += "<br>"
 
-	dat += "<br><b>Mane</b><br>"
+	dat += "<br><b>[local("Mane")]</b><br>"
 	dat += "<font face='fixedsys' size='3' color='#[num2hex(r_hair, 2)][num2hex(g_hair, 2)][num2hex(b_hair, 2)]'><table style='display:inline;' bgcolor='#[num2hex(r_hair, 2)][num2hex(g_hair, 2)][num2hex(b_hair)]'><tr><td><a href='?_src_=prefs;preference=hair;task=input'>__</a></td></tr></table></font> "
-	dat += "  Style: <a href='?_src_=prefs;preference=h_style;task=input'>[h_style]</a><br>"
+	dat += "  [local("Style")]: <a href='?_src_=prefs;preference=h_style;task=input'>[h_style]</a><br>"
 
-	dat += "<br><b>Facial</b><br>"
+	dat += "<br><b>[local("Facial")]</b><br>"
 	dat += "<font face='fixedsys' size='3' color='#[num2hex(r_facial, 2)][num2hex(g_facial, 2)][num2hex(b_facial, 2)]'><table  style='display:inline;' bgcolor='#[num2hex(r_facial, 2)][num2hex(g_facial, 2)][num2hex(b_facial)]'><tr><td><a href='?_src_=prefs;preference=facial;task=input'>__</a></td></tr></table></font> "
-	dat += " Style: <a href='?_src_=prefs;preference=f_style;task=input'>[f_style]</a><br>"
+	dat += " [local("Style")]: <a href='?_src_=prefs;preference=f_style;task=input'>[f_style]</a><br>"
 
-	dat += "<br><b>Tail</b><br>"
+	dat += "<br><b>[local("Tail")]</b><br>"
 	dat += "<font face='fixedsys' size='3' color='#[num2hex(r_tail, 2)][num2hex(g_tail, 2)][num2hex(b_tail, 2)]'><table  style='display:inline;' bgcolor='#[num2hex(r_tail, 2)][num2hex(g_tail, 2)][num2hex(b_tail)]'><tr><td><a href='?_src_=prefs;preference=pony_tail;task=input'>__</a></td></tr></table></font> "
-	dat += " Style: <a href='?_src_=prefs;preference=pony_tail_style;task=input'>[pony_tail_style]</a><br>"
+	dat += " [local("Style")]: <a href='?_src_=prefs;preference=pony_tail_style;task=input'>[pony_tail_style]</a><br>"
 
-	dat += "<br><b>Eyes: </b>"
+	dat += "<br><b>[local("Eyes")]: </b>"
 	dat += "<font face='fixedsys' size='3' color='#[num2hex(r_eyes, 2)][num2hex(g_eyes, 2)][num2hex(b_eyes, 2)]'><table  style='display:inline;' bgcolor='#[num2hex(r_eyes, 2)][num2hex(g_eyes, 2)][num2hex(b_eyes)]'><tr><td><a href='?_src_=prefs;preference=eyes;task=input'>__</a></td></tr></table></font> <br>"
 
-	dat += "<br><b>Body Color: </b>"
+	dat += "<br><b>[local("Body Color")]: </b>"
 	dat += "<font face='fixedsys' size='3' color='#[num2hex(r_skin, 2)][num2hex(g_skin, 2)][num2hex(b_skin, 2)]'><table style='display:inline;' bgcolor='#[num2hex(r_skin, 2)][num2hex(g_skin, 2)][num2hex(b_skin)]'><tr><td><a href='?_src_=prefs;preference=skin;task=input'>__</a></td></tr></table></font> <br>"
 
-	dat += "<br><b>Magic Aura Color:</b> "
+	dat += "<br><b>[local("Magic Aura Color")]:</b> "
 	dat += "<font face='fixedsys' size='3' color='#[num2hex(r_aura, 2)][num2hex(g_aura, 2)][num2hex(b_aura, 2)]'><table style='display:inline;' bgcolor='#[num2hex(r_aura, 2)][num2hex(g_aura, 2)][num2hex(b_aura)]'><tr><td><a href='?_src_=prefs;preference=aura;task=input'>__</a></td></tr></table></font> <br>"
 
 	dat += "<br><br>"
 
 	if(jobban_isbanned(user, "Syndicate"))
-		dat += "<b>You are banned from antagonist roles.</b>"
+		dat += "<b>[local("You are banned from antagonist roles")].</b>"
 		src.be_special = 0
 	else
 		var/n = 0
@@ -458,18 +477,18 @@ datum/preferences
 				if(jobban_isbanned(user, i) || (i == "positronic brain" && jobban_isbanned(user, "AI") && jobban_isbanned(user, "Cyborg")) || (i == "pAI candidate" && jobban_isbanned(user, "pAI")))
 					dat += "<b>Be [i]:<b> <font color=red><b> \[BANNED]</b></font><br>"
 				else
-					dat += "<b>Be [i]:</b> <a href='?_src_=prefs;preference=be_special;num=[n]'><b>[src.be_special&(1<<n) ? "Yes" : "No"]</b></a><br>"
+					dat += "<b>Be [i]:</b> <a href='?_src_=prefs;preference=be_special;num=[n]'><b>[src.be_special&(1<<n) ? local("Yes") : local("No")]</b></a><br>"
 			n++
 	dat += "</td></tr></table><hr><center>"
 
 	if(!IsGuestKey(user.key))
-		dat += "<a href='?_src_=prefs;preference=load'>Undo</a> - "
-		dat += "<a href='?_src_=prefs;preference=save'>Save Setup</a> - "
+		dat += "<a href='?_src_=prefs;preference=load'>[local("Undo")]</a> - "
+		dat += "<a href='?_src_=prefs;preference=save'>[local("Save Setup")]</a> - "
 
-	dat += "<a href='?_src_=prefs;preference=reset_all'>Reset Setup</a>"
+	dat += "<a href='?_src_=prefs;preference=reset_all'>[local("Reset Setup")]</a>"
 	dat += "</center></body></html>"
 
-	user << browse(dat, "window=preferences;size=560x736")
+	user << browse(fix_html(dat), "window=preferences;size=650x736")
 
 /datum/preferences/proc/SetChoices(mob/user, limit = 16, list/splitJobs = list("Chief Medical Officer"), width = 550, height = 660)
 	if(!job_master)
@@ -670,7 +689,8 @@ datum/preferences
 
 	dat += "<td><table padding='8px'>"
 	dat += "<tr>"
-	dat += {"<td width = 400>[current_species.blurb]</td>"}
+	if(user.client.language!="ru")	dat += {"<td width = 400>[current_species.blurb]</td>"}
+	else							dat += {"<td width = 400>[current_species.blurb_ru]</td>"}
 	dat += "<td width = 200 align='center'>"
 	if("preview" in icon_states(current_species.icobase))
 		usr << browse_rsc(icon(current_species.icobase,"preview", NORTH), "species_preview_[current_species.name]_n.png")
@@ -697,8 +717,8 @@ datum/preferences
 		dat += "</br><b>Has excellent traction.</b>"
 	if(current_species.flags & NO_POISON)
 		dat += "</br><b>Immune to most poisons.</b>"
-	if(current_species.flags & HAS_WINGS)
-		dat += "</br><b>Has a variety of skin tones.</b>"
+	if(/datum/organ/external/r_wing in current_species.has_external_organ && /datum/organ/external/l_wing in current_species.has_external_organ)
+		dat += "</br><b>Has a wings and can fly.</b>"
 	if(current_species.flags & HAS_SKIN_COLOR)
 		dat += "</br><b>Has a variety of skin colours.</b>"
 	if(current_species.flags & HAS_EYE_COLOR)
@@ -710,10 +730,11 @@ datum/preferences
 	dat += "</small></td>"
 	dat += "</tr>"
 	dat += "</table></td></tr></table><center><hr/>"
-	unicorn_spells = list()
-	if(current_species.flags & HAS_HORN)
+	spell_paths = list()
+	if(/datum/organ/external/horn in current_species.has_external_organ)
 		total_SP = current_species.name == "Alicorn" ? 10 : 5
 		free_SP = total_SP
+		dat += "</br><b>Has a horn and can make magic \[[total_SP]\].</b>"
 
 
 	var/there_will_be_set_white_list
@@ -772,24 +793,26 @@ datum/preferences
 	HTML += "<b>Spell Options</b> <hr /><br>"
 	free_SP = total_SP
 	HTML += "<br><b>Spells:</b><br><table>"
-	for(var/i = 1; i <= unicorn_spells.len; i++)
-		var/datum/spells/G = uspell_datums[unicorn_spells[i]]
-		free_SP -= G.cost
+
+	for(var/i = 1; i <= spell_paths.len; i++)
+		var/spell_type = spell_paths[i]
+		var/obj/effect/proc_holder/spell/targeted/civilian/G = new spell_type()
+		free_SP -= G.spell_level
 		HTML += "<tr><td>[i]. </td>"
-		HTML += "<td> [G.spell_name] </td>"
-		HTML += "<td>  [G.cost] SP </td>"
-		HTML += "<td bgcolor=[G.color] width=30> [G.color] </td>"
-		HTML += "<td> <a href='?src=\ref[user];preference=spelloptions;spelltask=removespell;spellname=[G.spell_name];active=1'>Remove</a></td></tr>"
+		HTML += "<td> [G.name] </td>"
+		HTML += "<td>  [G.spell_level] SP </td>"
+		//HTML += "<td bgcolor=[G.color] width=30> [G.color] </td>"
+		HTML += "<td> <a href='?src=\ref[user];preference=spelloptions;spelltask=removespell;spellname=[spell_type]'>Remove</a></td></tr>"
 	HTML += "</table>"
 
 	if(free_SP > 0)
-		HTML +="<br><a href='?src=\ref[user];preference=spelloptions;spelltask=addspell;active=1'>Add Spell</a>"
+		HTML +="<br><a href='?src=\ref[user];preference=spelloptions;spelltask=addspell'>Add Spell</a>"
 	HTML +="<br>"
 	HTML +="<br>"
 	HTML +="Free Spell Points: [free_SP]/[total_SP]<br>"
 	HTML +="<br><br>"
 	HTML +="<hr />"
-	HTML +="<a href='?src=\ref[user];preference=spelloptions;spelltask=done;active=1'>\[Done\]</a>"
+	HTML +="<a href='?src=\ref[user];preference=spelloptions;spelltask=done'>\[Done\]</a>"
 	HTML += "</center></tt>"
 
 	user << browse(null, "window=preferences")
@@ -987,10 +1010,81 @@ datum/preferences
 					job_engsec_low |= job.flag
 	return 1
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------------------------------------------------//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+/datum/preferences/proc/update_custom_cutiemark(mob/user)
+	del(cutiemark_paint_east)
+	del(cutiemark_paint_west)
+	cutiemark_paint_west = new/icon('icons/mob/cutiemarks.dmi', "blank")
+	cutiemark_paint_east = new/icon('icons/mob/cutiemarks.dmi', "blank")
+	for(var/ix=1, ix<=5, ix++)	for(var/iy=1, iy<=5, iy++)
+		cutiemark_paint_east.DrawBox(colors5x5[ix][iy], 11+ix, 9+iy)
+		cutiemark_paint_west.DrawBox(colors5x5[ix][iy], 16+6-ix, 9+iy)
+
+	if(user)
+		user << browse_rsc(new/icon('icons/paint.dmi',"brush"),"brush.jpg")
+		user << browse_rsc(new/icon('icons/paint.dmi',"eraser"),"eraser.jpg")
+		user << browse_rsc(cutiemark_paint_east,"cutiemark_paint.png")
+		user << browse_rsc(cutiemark_paint_west,"cutiemark_paint2.png")
+
+
 /datum/preferences/proc/process_link(mob/user, list/href_list)
 	if(!user)	return
 
 	if(!istype(user, /mob/new_player))	return
+
+	switch(href_list["cutie_paint"])
+		if("1")
+			brush_color = input(usr, "Choose your brush colour:", "Character Preference", brush_color) as color|null
+			CustomCutiemarkPaint(user)
+			return
+		if("pixel")
+			var/ix = text2num(href_list["x"])
+			var/iy = text2num(href_list["y"])
+			if(text2num(href_list["mod"])==1)		colors5x5[ix][iy] = brush_color
+			else									colors5x5[ix][iy] = "#00000000"
+			CustomCutiemarkPaint(user, text2num(href_list["mod"]))
+			return
+		if("3")
+			user << browse(null,  "window=cutie_paint")
+		if("switch")
+			update_custom_cutiemark()
+			custom_cutiemark = !custom_cutiemark
+		if("draw")
+			world << href_list["mod"]
+			CustomCutiemarkPaint(user, text2num(href_list["mod"]))
+			return
+
 
 	if(href_list["preference"] == "open_whitelist_forum")
 		if(config.forumurl)
@@ -1225,20 +1319,20 @@ datum/preferences
 			return
 		if (href_list["spelltask"] == "addspell")
 			var/list/valid_spell_choices = list()
-			if(isnull(unicorn_spells) || !islist(unicorn_spells)) unicorn_spells = list()
+			if(isnull(spell_paths) || !islist(spell_paths)) spell_paths = list()
 
-			for(var/spell_name in uspell_datums)
-				var/datum/spells/S = uspell_datums[spell_name]
-				if(!unicorn_spells.Find(spell_name) && S.cost <= free_SP)	valid_spell_choices += spell_name
+			for(var/spell_name in typesof(/obj/effect/proc_holder/spell/targeted/civilian)-/obj/effect/proc_holder/spell/targeted/civilian)
+				var/obj/effect/proc_holder/spell/targeted/civilian/S = new spell_name
+				if(!spell_paths.Find(spell_name) && S.spell_level <= free_SP)	valid_spell_choices += S
 			if(valid_spell_choices.len > 0)
-				var/choice = input(user, "Select unicorn spell to add: ") as null|anything in valid_spell_choices
-				unicorn_spells[choice] = uspell_datums[choice]
+				var/obj/effect/proc_holder/spell/targeted/civilian/choice = input(user, "Select spell to add: ") as null|anything in valid_spell_choices
+				spell_paths += choice.type
 			SetSpelloptions(user)
 		if (href_list["spelltask"] == "removespell")
-			unicorn_spells -= uspell_datums[href_list["spellname"]]
+			spell_paths.Remove(text2path(href_list["spellname"]))
 			SetSpelloptions(user)
 		if (href_list["spelltask"] == "done")
-			//user << browse(null, "window=spelloptions")
+			user << browse(null, "window=spelloptions")
 			ShowChoices(user)
 		return 1
 
@@ -1807,7 +1901,6 @@ datum/preferences
 
 	character.skills = skills
 	character.used_skillpoints = used_skillpoints
-	character.unicorn_spells = unicorn_spells
 	character.free_SP = free_SP
 	character.total_SP = total_SP
 
